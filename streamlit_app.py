@@ -21,30 +21,46 @@ def sauvegarder_joueurs(joueurs):
 # Charger les joueurs au démarrage
 joueurs = charger_joueurs()
 
-# Titre de la page
-st.title("Gestion des Joueurs")
+# Sidebar pour la navigation
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Aller à", ["Résultats", "Ajouter un joueur", "Ajouter une partie"], index=0)
 
-# Afficher la liste des joueurs horizontalement dans un tableau
-st.header("Liste des Joueurs")
-if joueurs:
-    cols = st.columns(len(joueurs))
-    for col, joueur in zip(cols, joueurs):
-        col.markdown(f"**{joueur}**")
-else:
-    st.write("Aucun joueur n'est encore ajouté.")
+# Page "Résultats"
+if page == "Résultats":
+    st.title("Résultats")
+    st.write("Voici le tableau des résultats :")
+    st.table([])
 
-# Formulaire pour ajouter un joueur
-st.header("Ajouter un Joueur")
-nouveau_joueur = st.text_input("Nom du joueur")
-if st.button("Ajouter"):
-    if nouveau_joueur:
-        if nouveau_joueur in joueurs:
-            st.error(f"Le joueur '{nouveau_joueur}' est déjà présent dans la liste.")
-        else:
-            with st.spinner(f"Ajout du joueur '{nouveau_joueur}'..."):
-                time.sleep(1)  # Simuler un délai de sauvegarde
-                joueurs.append(nouveau_joueur)
-                sauvegarder_joueurs(joueurs)
-            st.success(f"Joueur '{nouveau_joueur}' ajouté avec succès!")
+# Page "Ajouter un joueur"
+elif page == "Ajouter un joueur":
+    st.title("Ajouter un Joueur")
+
+    # Afficher la liste des joueurs horizontalement dans un tableau
+    st.header("Liste des Joueurs")
+    if joueurs:
+        cols = st.columns(len(joueurs))
+        for col, joueur in zip(cols, joueurs):
+            col.markdown(f"**{joueur}**")
     else:
-        st.error("Veuillez entrer un nom de joueur.")
+        st.write("Aucun joueur n'est encore ajouté.")
+
+    # Formulaire pour ajouter un joueur
+    st.header("Ajouter un Joueur")
+    nouveau_joueur = st.text_input("Nom du joueur")
+    if st.button("Ajouter"):
+        if nouveau_joueur:
+            if nouveau_joueur in joueurs:
+                st.error(f"Le joueur '{nouveau_joueur}' est déjà présent dans la liste.")
+            else:
+                with st.spinner(f"Ajout du joueur '{nouveau_joueur}'..."):
+                    time.sleep(1)  # Simuler un délai de sauvegarde
+                    joueurs.append(nouveau_joueur)
+                    sauvegarder_joueurs(joueurs)
+                st.success(f"Joueur '{nouveau_joueur}' ajouté avec succès!")
+        else:
+            st.error("Veuillez entrer un nom de joueur.")
+
+# Page "Ajouter une partie"
+elif page == "Ajouter une partie":
+    st.title("Ajouter une Partie")
+    st.write("Cette page est en cours de développement.")
