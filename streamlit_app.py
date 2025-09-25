@@ -8,7 +8,7 @@ import uuid
 fichier_joueurs = "joueurs.json"
 
 # Chemin du fichier pour stocker les résultats des parties
-fichier_resultats = "resultats.json"
+fichier_resultats = "results.json"
 
 # Mot de passe pour accéder aux autres onglets
 mot_de_passe = "kakoukakou"
