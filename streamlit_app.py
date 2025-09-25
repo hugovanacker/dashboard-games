@@ -44,8 +44,30 @@ page = st.sidebar.radio("Aller à", ["Résultats", "Ajouter un joueur", "Ajouter
 # Page "Résultats"
 if page == "Résultats":
     st.title("Résultats")
-    st.write("Voici le tableau des résultats :")
-    st.table([])
+
+    # Section "Dernières parties"
+    st.header("Dernières parties")
+
+    # Recherche par nom ou date
+    recherche_nom = st.text_input("Rechercher par nom de partie")
+    recherche_date = st.date_input("Rechercher par date", value=None)
+
+    # Filtrer les résultats en fonction des critères de recherche
+    resultats_filtres = resultats
+    if recherche_nom:
+        resultats_filtres = [r for r in resultats_filtres if recherche_nom.lower() in r["partie"].lower()]
+    if recherche_date:
+        resultats_filtres = [r for r in resultats_filtres if r["date"] == recherche_date.strftime("%Y-%m-%d")]
+
+    # Trier les résultats par date (du plus récent au plus ancien)
+    resultats_filtres.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"), reverse=True)
+
+    # Afficher les résultats filtrés
+    if resultats_filtres:
+        for resultat in resultats_filtres:
+            st.write(f"**Partie:** {resultat['partie']}, **Date:** {resultat['date']}, **Position:** {resultat['position']}, **Joueur:** {resultat['joueur']}")
+    else:
+        st.write("Aucun résultat trouvé.")
 
 # Page "Ajouter un joueur"
 elif page == "Ajouter un joueur":
