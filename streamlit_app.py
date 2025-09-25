@@ -6,8 +6,8 @@ from datetime import datetime
 # Chemin du fichier pour stocker les joueurs
 fichier_joueurs = "joueurs.json"
 
-# Chemin du fichier pour stocker les parties
-fichier_parties = "parties.json"
+# Chemin du fichier pour stocker les résultats des parties
+fichier_resultats = "resultats.json"
 
 # Fonction pour charger les joueurs depuis le fichier
 def charger_joueurs():
@@ -21,21 +21,21 @@ def sauvegarder_joueurs(joueurs):
     with open(fichier_joueurs, "w") as f:
         json.dump(joueurs, f)
 
-# Fonction pour charger les parties depuis le fichier
-def charger_parties():
-    if os.path.exists(fichier_parties):
-        with open(fichier_parties, "r") as f:
+# Fonction pour charger les résultats des parties depuis le fichier
+def charger_resultats():
+    if os.path.exists(fichier_resultats):
+        with open(fichier_resultats, "r") as f:
             return json.load(f)
     return []
 
-# Fonction pour sauvegarder les parties dans le fichier
-def sauvegarder_parties(parties):
-    with open(fichier_parties, "w") as f:
-        json.dump(parties, f)
+# Fonction pour sauvegarder les résultats des parties dans le fichier
+def sauvegarder_resultats(resultats):
+    with open(fichier_resultats, "w") as f:
+        json.dump(resultats, f)
 
-# Charger les joueurs et les parties au démarrage
+# Charger les joueurs et les résultats des parties au démarrage
 joueurs = charger_joueurs()
-parties = charger_parties()
+resultats = charger_resultats()
 
 # Sidebar pour la navigation
 st.sidebar.title("Navigation")
@@ -83,20 +83,29 @@ elif page == "Ajouter une partie":
     date_partie = st.date_input("Date de la partie", datetime.today())
     nombre_joueurs = st.number_input("Nombre de joueurs", min_value=1, value=1)
 
-    results = {}
+    results = []
     for i in range(1, nombre_joueurs + 1):
         joueur = st.selectbox(f"Joueur à la position {i}", [""] + joueurs)
-        results[f"Position {i}"] = joueur
+        if joueur:
+            results.append({
+                "partie": nom_jeu,
+                "date": date_partie.strftime("%Y-%m-%d"),
+                "position": i,
+                "joueur": joueur
+            })
 
     if st.button("Ajouter la partie"):
-        if nom_jeu and all(results.values()):
-            nouvelle_partie = {
-                "nom_jeu": nom_jeu,
-                "date": date_partie.strftime("%Y-%m-%d"),
-                "resultats": results
-            }
-            parties.append(nouvelle_partie)
-            sauvegarder_parties(parties)
-            st.success("Partie ajoutée avec succès!")
+        if nom_jeu and all(result["joueur"] for result in results):
+            # Vérifier si une partie avec le même nom existe déjà pour cette date
+            partie_existante = any(
+                r["partie"] == nom_jeu and r["date"] == date_partie.strftime("%Y-%m-%d")
+                for r in resultats
+            )
+            if partie_existante:
+                st.error(f"Une partie nommée '{nom_jeu}' existe déjà pour la date du {date_partie.strftime('%Y-%m-%d')}.")
+            else:
+                resultats.extend(results)
+                sauvegarder_resultats(resultats)
+                st.success("Partie ajoutée avec succès!")
         else:
             st.error("Veuillez remplir tous les champs.")
