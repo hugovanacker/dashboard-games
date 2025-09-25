@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
+import uuid
 
 # Chemin du fichier pour stocker les joueurs
 fichier_joueurs = "joueurs.json"
@@ -94,15 +95,18 @@ if page == "Résultats":
 
     # Filtrer les résultats en fonction des joueurs sélectionnés
     if joueurs_selectionnes:
-        resultats_filtres = []
-        parties_filtrees = set()
-        for resultat in resultats:
-            joueurs_partie = [r["joueur"] for r in resultats if r["partie"] == resultat["partie"]]
-            if set(joueurs_partie) == set(joueurs_selectionnes):
-                parties_filtrees.add(resultat["partie"])
-        for resultat in resultats:
-            if resultat["partie"] in parties_filtrees:
-                resultats_filtres.append(resultat)
+        # Construire un mapping party_key -> liste de joueurs
+        # party_key = partie_id si disponible, sinon 'partie|date' (fallback pour anciennes entrées)
+        parties_joueurs = {}
+        for r in resultats:
+            key = r.get("partie_id") or f"{r['partie']}|{r['date']}"
+            parties_joueurs.setdefault(key, set()).add(r["joueur"])
+
+        # Trouver les keys correspondant exactement aux joueurs sélectionnés
+        parties_trouvees = {k for k, joueurs_set in parties_joueurs.items() if joueurs_set == set(joueurs_selectionnes)}
+
+        # Filtrer les résultats en gardant uniquement les entrées dont la party_key est dans parties_trouvees
+        resultats_filtres = [r for r in resultats if (r.get("partie_id") or f"{r['partie']}|{r['date']}") in parties_trouvees]
     else:
         resultats_filtres = resultats
 
@@ -177,16 +181,14 @@ elif page == "Ajouter une partie":
 
         if st.button("Ajouter la partie"):
             if nom_jeu and all(result["joueur"] for result in results):
-                # Vérifier si une partie avec le même nom existe déjà pour cette date
-                partie_existante = any(
-                    r["partie"] == nom_jeu and r["date"] == date_partie.strftime("%Y-%m-%d")
-                    for r in resultats
-                )
-                if partie_existante:
-                    st.error(f"Une partie nommée '{nom_jeu}' existe déjà pour la date du {date_partie.strftime('%Y-%m-%d')}.")
-                else:
-                    resultats.extend(results)
-                    sauvegarder_resultats(resultats)
-                    st.success("Partie ajoutée avec succès!")
+                # Générer un identifiant unique pour la partie
+                id_partie = str(uuid.uuid4())
+                # Ajouter l'identifiant à chaque résultat de la partie
+                for r in results:
+                    r["partie_id"] = id_partie
+                # Enregistrer les résultats (plusieurs lignes: une par joueur/position)
+                resultats.extend(results)
+                sauvegarder_resultats(resultats)
+                st.success("Partie ajoutée avec succès !")
             else:
                 st.error("Veuillez remplir tous les champs.")
