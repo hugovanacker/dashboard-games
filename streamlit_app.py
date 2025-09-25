@@ -122,11 +122,48 @@ if page == "Résultats":
 
     # Trier les résultats par date (du plus récent au plus ancien)
     resultats_filtres.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"), reverse=True)
+    # Construire une table avec une ligne par partie
+    # Regrouper par partie (partie_id si disponible, sinon 'partie|date')
+    parties = {}
+    for r in resultats_filtres:
+        key = r.get("partie_id") or f"{r['partie']}|{r['date']}"
+        if key not in parties:
+            parties[key] = {
+                "partie": r["partie"],
+                "date": r["date"],
+                "positions": {}
+            }
+        parties[key]["positions"][r["position"]] = r["joueur"]
 
-    # Afficher les résultats filtrés
-    if resultats_filtres:
-        for resultat in resultats_filtres:
-            st.write(f"**Partie:** {resultat['partie']}, **Date:** {resultat['date']}, **Position:** {resultat['position']}, **Joueur:** {resultat['joueur']}")
+    if parties:
+        # Déterminer le nombre maximum de positions pour créer les colonnes
+        max_pos = 0
+        for p in parties.values():
+            if p["positions"]:
+                max_pos = max(max_pos, max(p["positions"].keys()))
+
+        # Construire les lignes du tableau
+        table_rows = []
+        for key, p in parties.items():
+            row = {
+                "Nom du jeu": p["partie"],
+                "Date": p["date"]
+            }
+            for pos in range(1, max_pos + 1):
+                row[f"Position {pos}"] = p["positions"].get(pos, "")
+            table_rows.append(row)
+
+        # Afficher la table (DataFrame-like)
+        import pandas as pd
+        df = pd.DataFrame(table_rows)
+        # Trier par date décroissante
+        try:
+            df["Date_sort"] = pd.to_datetime(df["Date"]) 
+            df = df.sort_values(by="Date_sort", ascending=False).drop(columns=["Date_sort"])
+        except Exception:
+            pass
+
+        st.table(df)
     else:
         st.write("Aucun résultat trouvé.")
 
